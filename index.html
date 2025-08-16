@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏕️ Prova Gamificada - Especialidade Acampamento I</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; }
+        .question-card { transition: all 0.3s ease; }
+        .question-card:hover { transform: translateY(-2px); }
+        .correct { animation: correctPulse 0.6s ease-in-out; }
+        .incorrect { animation: incorrectShake 0.6s ease-in-out; }
+        @keyframes correctPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .progress-bar { transition: width 0.5s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-green-400 via-blue-500 to-purple-600 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">🏕️ Especialidade Acampamento I</h1>
+            <p class="text-xl text-white/90">Prova Gamificada Interativa</p>
+            <div class="mt-4 bg-white/20 rounded-full p-1 max-w-md mx-auto">
+                <div id="progressBar" class="progress-bar bg-yellow-400 h-4 rounded-full" style="width: 0%"></div>
+            </div>
+            <p class="text-white mt-2">Progresso: <span id="progressText">0/15</span></p>
+        </div>
+
+        <!-- Score Display -->
+        <div class="text-center mb-6">
+            <div class="inline-flex items-center bg-white/20 rounded-full px-6 py-3">
+                <span class="text-2xl mr-2">🏆</span>
+                <span class="text-xl font-semibold text-white">Pontuação: <span id="score">0</span></span>
+            </div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div id="quizContainer" class="max-w-4xl mx-auto">
+            <!-- Questions will be inserted here -->
+        </div>
+
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="hidden max-w-2xl mx-auto text-center">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <div id="resultIcon" class="text-8xl mb-4"></div>
+                <h2 id="resultTitle" class="text-3xl font-bold mb-4"></h2>
+                <p id="resultMessage" class="text-xl text-gray-600 mb-6"></p>
+                <div class="bg-gradient-to-r from-green-400 to-blue-500 rounded-xl p-6 mb-6">
+                    <p class="text-white text-lg">Pontuação Final: <span id="finalScore" class="font-bold text-2xl"></span>/150</p>
+                    <p class="text-white/90">Acertos: <span id="correctAnswers"></span>/15</p>
+                </div>
+                <button onclick="restartQuiz()" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+                    🔄 Tentar Novamente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                type: "multiple",
+                question: "🌿 Qual é o princípio MAIS importante da boa educação no campo?",
+                options: [
+                    "Fazer o máximo de barulho para espantar animais",
+                    "Deixar a natureza como encontrou ou melhor",
+                    "Coletar plantas raras como lembrança",
+                    "Alimentar todos os animais selvagens"
+                ],
+                correct: 1,
+                points: 10
+            },
+            {
+                type: "sequence",
+                question: "🧭 Ordene as 8 coisas que devem ser feitas quando se está perdido:",
+                steps: [
+                    "COMER",
+                    "PARAR", 
+                    "ORIENTAR",
+                    "ACALMAR",
+                    "ANDAR",
+                    "SENTAR",
+                    "LEMBRAR",
+                    "ORAR"
+                ],
+                correctOrder: [1, 3, 5, 7, 0, 2, 6, 4], // PARAR, ACALMAR, SENTAR, ORAR, COMER, ORIENTAR, LEMBRAR, ANDAR
+                points: 15
+            },
+            {
+                type: "multiple",
+                question: "🏕️ Qual equipamento de dormir é MAIS adequado para temperaturas de inverno rigoroso?",
+                options: [
+                    "Lençol térmico simples",
+                    "Saco de dormir -10°C com isolante térmico",
+                    "Cobertor comum de algodão",
+                    "Rede sem proteção"
+                ],
+                correct: 1,
+                points: 10
+            },
+            {
+                type: "checklist",
+                question: "🎒 Selecione os objetos ESSENCIAIS para um acampamento de fim de semana:",
+                options: [
+                    { text: "Barraca", essential: true },
+                    { text: "Saco de dormir", essential: true },
+                    { text: "Lanterna", essential: true },
+                    { text: "Kit de primeiros socorros", essential: true },
+                    { text: "Roupas extras", essential: true },
+                    { text: "Televisão portátil", essential: false },
+                    { text: "Comida e água", essential: true },
+                    { text: "Fogão portátil", essential: true },
+                    { text: "Produtos de higiene", essential: true },
+                    { text: "Videogame", essential: false },
+                    { text: "Secador de cabelo", essential: false },
+                    { text: "Repelente de insetos", essential: true },
+                    { text: "Ferro de passar roupa", essential: false },
+                    { text: "Protetor solar", essential: true },
+                    { text: "Aspirador de pó", essential: false },
+                    { text: "Canivete ou ferramenta multiuso", essential: true }
+                ],
+                points: 10
+            },
+            {
+                type: "sequence",
+                question: "⛺ Ordene os passos para montar uma barraca corretamente:",
+                steps: [
+                    "Fixar as estacas e esticadores",
+                    "Escolher local plano e protegido",
+                    "Montar a estrutura da barraca",
+                    "Verificar regras de prevenção contra incêndios",
+                    "Estender o sobreteto no chão",
+                    "Limpar o terreno de pedras e galhos"
+                ],
+                correctOrder: [1, 5, 4, 2, 0, 3], // Ordem correta: 1-Escolher local, 2-Limpar terreno, 3-Estender sobreteto, 4-Montar estrutura, 5-Fixar estacas, 6-Verificar regras
+                points: 12
+            },
+            {
+                type: "multiple",
+                question: "🧼 Em um acampamento rústico, qual é a forma CORRETA de lavar louças?",
+                options: [
+                    "Lavar diretamente no rio ou lago",
+                    "Usar água aquecida, longe de fontes naturais, e filtrar restos",
+                    "Deixar para lavar em casa",
+                    "Usar apenas papel para limpar"
+                ],
+                correct: 1,
+                points: 8
+            },
+            {
+                type: "safety",
+                question: "🔪 Selecione as 10 regras de segurança para canivete e machadinha:",
+                rules: [
+                    { text: "Sempre cortar para longe do corpo", correct: true },
+                    { text: "Manter as lâminas afiadas", correct: true },
+                    { text: "Nunca deixar ferramentas no chão", correct: true },
+                    { text: "Passar a ferramenta pela mão para outra pessoa", correct: false },
+                    { text: "Usar área de trabalho estável", correct: true },
+                    { text: "Guardar em local seguro após uso", correct: true },
+                    { text: "Verificar se não há pessoas próximas", correct: true },
+                    { text: "Usar proteção adequada", correct: true },
+                    { text: "Cortar materiais adequados apenas", correct: true },
+                    { text: "Manter concentração durante uso", correct: true },
+                    { text: "Limpar após o uso", correct: true },
+                    { text: "Deixar aberto para secar", correct: false },
+                    { text: "Não brinque com o canivete ou com a machadinha", correct: true },
+                    { text: "Corte a madeira sempre de forma oblíqua", correct: true },
+                    { text: "Para cortar um tronco faça um corte em V", correct: true },
+                    { text: "Nunca deixe ferramentas de corte espalhadas", correct: true },
+                    { text: "Pode emprestar para qualquer pessoa", correct: false },
+                    { text: "Use sempre com pressa para terminar logo", correct: false }
+                ],
+                points: 15
+            },
+            {
+                type: "multiple",
+                question: "🔥 Qual é o local IDEAL para fazer uma fogueira?",
+                options: [
+                    "Próximo à barraca para aquecer",
+                    "Sob galhos secos de árvores",
+                    "Local aberto, longe de vegetação, com pedras ao redor",
+                    "Dentro da barraca em dias frios"
+                ],
+                correct: 2,
+                points: 10
+            },
+            {
+                type: "sequence",
+                question: "🔥 Ordene os passos para acender uma fogueira com um fósforo:",
+                steps: [
+                    "Colocar galhos maiores conforme pega fogo",
+                    "Fazer ninho com material seco",
+                    "Acender a isca com o fósforo",
+                    "Preparar gravetos finos (isca)",
+                    "Adicionar gravetos gradualmente",
+                    "Separar galhos médios e grossos"
+                ],
+                correctOrder: [3, 5, 1, 2, 4, 0], // Ordem correta: 1-Preparar gravetos finos, 2-Separar galhos médios/grossos, 3-Fazer ninho, 4-Acender isca, 5-Adicionar gravetos, 6-Colocar galhos maiores
+                points: 12
+            },
+            {
+                type: "multiple",
+                question: "🌧️ Como proteger lenha da chuva durante acampamento?",
+                options: [
+                    "Deixar ao relento para secar naturalmente",
+                    "Cobrir com lona ou plástico, elevar do chão",
+                    "Enterrar na terra",
+                    "Guardar dentro da barraca"
+                ],
+                correct: 1,
+                points: 8
+            },
+            {
+                type: "multiple",
+                question: "🍞 Qual é o segredo para fazer um bom pão no espeto?",
+                options: [
+                    "Usar fogo alto e direto",
+                    "Massa muito líquida",
+                    "Brasas moderadas, girar constantemente",
+                    "Deixar parado em um local"
+                ],
+                correct: 2,
+                points: 8
+            },
+            {
+                type: "checklist",
+                question: "🧼 Selecione as práticas CORRETAS de higiene pessoal no acampamento:",
+                options: [
+                    { text: "Escovar os dentes após as refeições", essential: true },
+                    { text: "Tomar banho no rio com sabonete comum", essential: false },
+                    { text: "Usar produtos biodegradáveis", essential: true },
+                    { text: "Lavar as mãos antes das refeições", essential: true },
+                    { text: "Jogar água suja diretamente no solo", essential: false },
+                    { text: "Manter unhas limpas e cortadas", essential: true },
+                    { text: "Usar repelente contra insetos", essential: true },
+                    { text: "Deixar lixo orgânico espalhado", essential: false },
+                    { text: "Trocar de roupa regularmente", essential: true },
+                    { text: "Usar água tratada para beber", essential: true },
+                    { text: "Fazer necessidades próximo à fonte de água", essential: false }
+                ],
+                points: 10
+            },
+            {
+                type: "multiple",
+                question: "🌙 Qual roupa é MAIS adequada para dormir no acampamento?",
+                options: [
+                    "A mesma roupa do dia",
+                    "Roupa íntima apenas",
+                    "Roupa seca, confortável e adequada à temperatura",
+                    "Roupas molhadas para refrescar"
+                ],
+                correct: 2,
+                points: 8
+            },
+            {
+                type: "reflection",
+                question: "🌱 Escreva uma lição espiritual que você pode aprender da natureza:",
+                placeholder: "Ex: As árvores nos ensinam paciência, crescendo devagar mas com raízes profundas...",
+                points: 10
+            },
+            {
+                type: "multiple",
+                question: "📸 O lema 'não levar nada além de fotos, não deixar nada além de pegadas, não matar nada além do tempo' significa:",
+                options: [
+                    "Podemos coletar plantas e animais",
+                    "Devemos fotografar tudo e deixar a natureza intocada",
+                    "É permitido fazer fogueiras em qualquer lugar",
+                    "Podemos deixar lixo biodegradável"
+                ],
+                correct: 1,
+                points: 10
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let correctAnswers = 0;
+
+        function updateProgress() {
+            const progress = (currentQuestion / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = `${currentQuestion}/${questions.length}`;
+        }
+
+        function updateScore(points) {
+            score += points;
+            document.getElementById('score').textContent = score;
+        }
+
+        function showQuestion(index) {
+            const question = questions[index];
+            const container = document.getElementById('quizContainer');
+            
+            let questionHTML = `
+                <div class="question-card bg-white rounded-2xl shadow-2xl p-8 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <span class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full font-semibold">
+                            Questão ${index + 1}
+                        </span>
+                        <span class="text-green-600 font-semibold">+${question.points} pontos</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">${question.question}</h3>
+            `;
+
+            switch(question.type) {
+                case 'multiple':
+                    questionHTML += '<div class="space-y-3">';
+                    question.options.forEach((option, i) => {
+                        questionHTML += `
+                            <button onclick="selectMultiple(${i}, ${question.correct}, ${question.points})" 
+                                    class="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all">
+                                ${option}
+                            </button>
+                        `;
+                    });
+                    questionHTML += '</div>';
+                    break;
+
+                case 'checklist':
+                    questionHTML += '<div class="grid grid-cols-2 gap-3">';
+                    question.options.forEach((option, i) => {
+                        questionHTML += `
+                            <label class="flex items-center p-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" class="mr-3 checklist-item" data-essential="${option.essential}">
+                                <span>${option.text}</span>
+                            </label>
+                        `;
+                    });
+                    questionHTML += `</div>
+                        <button onclick="checkChecklist(${question.points})" 
+                                class="mt-6 bg-gradient-to-r from-green-500 to-blue-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+                            ✅ Verificar Resposta
+                        </button>`;
+                    break;
+
+                case 'reflection':
+                    questionHTML += `
+                        <textarea id="reflectionText" placeholder="${question.placeholder}" 
+                                  class="w-full h-32 p-4 border-2 border-gray-200 rounded-xl focus:border-blue-400 focus:outline-none resize-none"></textarea>
+                        <button onclick="submitReflection(${question.points})" 
+                                class="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+                            📝 Enviar Reflexão
+                        </button>
+                    `;
+                    break;
+
+                case 'sequence':
+                    questionHTML += `
+                        <div id="sequenceContainer" class="space-y-3">
+                            ${question.steps.map((step, i) => `
+                                <div class="sequence-item p-4 bg-gray-100 rounded-xl cursor-move border-2 border-dashed border-gray-300" 
+                                     draggable="true" data-index="${i}">
+                                    <span class="font-semibold text-gray-600">📋</span> ${step}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button onclick="checkSequence(${question.points})" 
+                                class="mt-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+                            🔄 Verificar Ordem
+                        </button>
+                    `;
+                    break;
+
+                case 'safety':
+                    questionHTML += '<div class="grid grid-cols-1 gap-3">';
+                    question.rules.forEach((rule, i) => {
+                        questionHTML += `
+                            <label class="flex items-center p-3 rounded-xl border-2 border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input type="checkbox" class="mr-3 safety-rule" data-correct="${rule.correct}">
+                                <span>${rule.text}</span>
+                            </label>
+                        `;
+                    });
+                    questionHTML += `</div>
+                        <button onclick="checkSafety(${question.points})" 
+                                class="mt-6 bg-gradient-to-r from-red-500 to-orange-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition-all">
+                            🛡️ Verificar Segurança
+                        </button>`;
+                    break;
+            }
+
+            questionHTML += '</div>';
+            container.innerHTML = questionHTML;
+
+            // Add drag and drop functionality for sequence questions
+            if (question.type === 'sequence') {
+                addDragAndDrop();
+            }
+        }
+
+        function selectMultiple(selected, correct, points) {
+            const buttons = document.querySelectorAll('button[onclick^="selectMultiple"]');
+            buttons.forEach((btn, i) => {
+                btn.disabled = true;
+                if (i === correct) {
+                    btn.classList.add('bg-green-500', 'text-white', 'correct');
+                } else if (i === selected && i !== correct) {
+                    btn.classList.add('bg-red-500', 'text-white', 'incorrect');
+                } else {
+                    btn.classList.add('bg-gray-300');
+                }
+            });
+
+            if (selected === correct) {
+                updateScore(points);
+                correctAnswers++;
+                setTimeout(() => showFeedback(true, "Excelente! Resposta correta! 🎉"), 1000);
+            } else {
+                setTimeout(() => showFeedback(false, "Ops! Resposta incorreta. A resposta correta está destacada em verde."), 1000);
+            }
+        }
+
+        function checkChecklist(points) {
+            const checkboxes = document.querySelectorAll('.checklist-item');
+            let correct = true;
+            let totalCorrect = 0;
+
+            checkboxes.forEach(checkbox => {
+                const isEssential = checkbox.dataset.essential === 'true';
+                const isChecked = checkbox.checked;
+                
+                if (isEssential && isChecked) {
+                    totalCorrect++;
+                    checkbox.parentElement.classList.add('bg-green-100', 'border-green-400');
+                } else if (!isEssential && !isChecked) {
+                    totalCorrect++;
+                    checkbox.parentElement.classList.add('bg-green-100', 'border-green-400');
+                } else {
+                    correct = false;
+                    checkbox.parentElement.classList.add('bg-red-100', 'border-red-400');
+                }
+            });
+
+            if (totalCorrect >= 6) { // Permitir algumas variações
+                updateScore(points);
+                correctAnswers++;
+                showFeedback(true, `Muito bem! Você selecionou ${totalCorrect} itens corretamente! 🎒`);
+            } else {
+                showFeedback(false, `Você acertou ${totalCorrect} itens. Revise os itens essenciais para acampamento.`);
+            }
+        }
+
+        function submitReflection(points) {
+            const text = document.getElementById('reflectionText').value.trim();
+            if (text.length >= 20) {
+                updateScore(points);
+                correctAnswers++;
+                showFeedback(true, "Reflexão maravilhosa! A natureza realmente tem muito a nos ensinar. 🌱");
+            } else {
+                showFeedback(false, "Que tal elaborar um pouco mais sua reflexão? Pense em como a natureza pode nos inspirar.");
+            }
+        }
+
+        function checkSequence(points) {
+            const items = document.querySelectorAll('.sequence-item');
+            const question = questions[currentQuestion];
+            let correct = true;
+            
+            // Se a questão tem ordem correta definida, usar ela
+            if (question.correctOrder) {
+                items.forEach((item, currentIndex) => {
+                    const originalIndex = parseInt(item.dataset.index);
+                    const correctPosition = question.correctOrder.indexOf(originalIndex);
+                    
+                    if (correctPosition === currentIndex) {
+                        item.classList.add('bg-green-100', 'border-green-400');
+                    } else {
+                        item.classList.add('bg-red-100', 'border-red-400');
+                        correct = false;
+                    }
+                });
+            } else {
+                // Verificação padrão (ordem original)
+                items.forEach((item, index) => {
+                    const originalIndex = parseInt(item.dataset.index);
+                    if (originalIndex === index) {
+                        item.classList.add('bg-green-100', 'border-green-400');
+                    } else {
+                        item.classList.add('bg-red-100', 'border-red-400');
+                        correct = false;
+                    }
+                });
+            }
+
+            if (correct) {
+                updateScore(points);
+                correctAnswers++;
+                showFeedback(true, "Perfeito! Você ordenou corretamente todos os passos! 📋");
+            } else {
+                showFeedback(false, "Quase lá! Alguns passos estão fora de ordem. Tente reorganizar.");
+            }
+        }
+
+        function checkSafety(points) {
+            const checkboxes = document.querySelectorAll('.safety-rule');
+            let correctCount = 0;
+            let totalCorrect = 0;
+
+            checkboxes.forEach(checkbox => {
+                const isCorrect = checkbox.dataset.correct === 'true';
+                const isChecked = checkbox.checked;
+                
+                if (isCorrect && isChecked) {
+                    correctCount++;
+                    totalCorrect++;
+                    checkbox.parentElement.classList.add('bg-green-100', 'border-green-400');
+                } else if (!isCorrect && !isChecked) {
+                    totalCorrect++;
+                    checkbox.parentElement.classList.add('bg-green-100', 'border-green-400');
+                } else {
+                    checkbox.parentElement.classList.add('bg-red-100', 'border-red-400');
+                }
+            });
+
+            if (correctCount >= 10) { // Precisa acertar pelo menos 10 das 14 regras corretas
+                updateScore(points);
+                correctAnswers++;
+                showFeedback(true, `Excelente conhecimento de segurança! Você identificou ${correctCount} regras corretas! 🛡️`);
+            } else {
+                showFeedback(false, `Você identificou ${correctCount} regras corretas. Estude mais sobre segurança com ferramentas.`);
+            }
+        }
+
+        function addDragAndDrop() {
+            const container = document.getElementById('sequenceContainer');
+            let draggedElement = null;
+
+            container.addEventListener('dragstart', (e) => {
+                draggedElement = e.target;
+                e.target.style.opacity = '0.5';
+            });
+
+            container.addEventListener('dragend', (e) => {
+                e.target.style.opacity = '';
+            });
+
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.target.classList.contains('sequence-item') && e.target !== draggedElement) {
+                    const allItems = Array.from(container.children);
+                    const draggedIndex = allItems.indexOf(draggedElement);
+                    const targetIndex = allItems.indexOf(e.target);
+                    
+                    if (draggedIndex < targetIndex) {
+                        container.insertBefore(draggedElement, e.target.nextSibling);
+                    } else {
+                        container.insertBefore(draggedElement, e.target);
+                    }
+                }
+            });
+        }
+
+        function showFeedback(isCorrect, message) {
+            const feedbackDiv = document.createElement('div');
+            feedbackDiv.className = `fixed top-4 right-4 p-4 rounded-xl shadow-lg z-50 ${isCorrect ? 'bg-green-500' : 'bg-red-500'} text-white max-w-sm`;
+            feedbackDiv.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-2xl mr-3">${isCorrect ? '✅' : '❌'}</span>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            document.body.appendChild(feedbackDiv);
+            
+            setTimeout(() => {
+                feedbackDiv.remove();
+                nextQuestion();
+            }, 3000);
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            updateProgress();
+            
+            if (currentQuestion < questions.length) {
+                setTimeout(() => showQuestion(currentQuestion), 500);
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('resultsScreen').classList.remove('hidden');
+            
+            const percentage = (correctAnswers / questions.length) * 100;
+            const resultIcon = document.getElementById('resultIcon');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('correctAnswers').textContent = correctAnswers;
+            
+            if (percentage >= 80) {
+                resultIcon.textContent = '🏆';
+                resultTitle.textContent = 'Parabéns, Desbravador!';
+                resultMessage.textContent = 'Você demonstrou excelente conhecimento sobre acampamento! Está pronto para aventuras na natureza!';
+            } else if (percentage >= 60) {
+                resultIcon.textContent = '🎖️';
+                resultTitle.textContent = 'Bom trabalho!';
+                resultMessage.textContent = 'Você tem uma boa base sobre acampamento. Continue estudando para se tornar um expert!';
+            } else {
+                resultIcon.textContent = '📚';
+                resultTitle.textContent = 'Continue estudando!';
+                resultMessage.textContent = 'Você precisa revisar mais sobre técnicas de acampamento. A prática leva à perfeição!';
+            }
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            correctAnswers = 0;
+            document.getElementById('score').textContent = '0';
+            document.getElementById('resultsScreen').classList.add('hidden');
+            document.getElementById('quizContainer').style.display = 'block';
+            updateProgress();
+            showQuestion(0);
+        }
+
+        // Initialize quiz
+        showQuestion(0);
+        updateProgress();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9702da7495cbf61e',t:'MTc1NTM2NzQ1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
